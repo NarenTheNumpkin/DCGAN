@@ -2,11 +2,11 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from dataset import Animefaces
+from code.dataset import Animefaces
 from torch.utils.data import DataLoader
-from generator import Generator
-from discriminator import Discriminator
-from train import Trainer
+from code.generator import Generator
+from code.discriminator import Discriminator
+from code.train import Trainer
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -24,14 +24,14 @@ epochs = 20
 save_dir = "results"
 os.makedirs(save_dir, exist_ok=True)
 
-device = torch.device("cuda")
+device = torch.device("mps")
 gen = Generator().to(device)
 dis = Discriminator().to(device)
 
 gen.apply(weights_init)
 dis.apply(weights_init)
 
-dataset = Animefaces("GAN")
+dataset = Animefaces("data")
 dataloader = DataLoader(dataset, 128, True)
 
 optimizerD = optim.Adam(dis.parameters(), lr=lr, betas=(beta1, 0.999))

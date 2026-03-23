@@ -15,13 +15,13 @@ class Trainer():
             device,
             save_dir
         ):
-        
+
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = gen_optimizer
         self.dis_optimizer = dis_optimizer
         self.trainer_loader = trainer_loader
-        self.device = device 
+        self.device = device
         self.generator = self.generator.to(self.device)
         self.discriminator = self.discriminator.to(self.device)
         self.save_dir = save_dir
@@ -35,7 +35,7 @@ class Trainer():
         total_gen_loss = 0
         total_dis_loss = 0
 
-        for i, (real_images, _) in enumerate(self.trainer_loader):
+        for i, real_images in enumerate(self.trainer_loader):
             real_images = real_images.to(self.device)
             BATCH_SIZE = real_images.size(0)
             labels_real = torch.full((BATCH_SIZE, ), 1.0, device=self.device)
@@ -57,7 +57,7 @@ class Trainer():
             output_fake = self.discriminator(fake.detach()).view(-1) # detach from comp graph otherwise grad will flow back to generator
             loss_d_fake = criterion(output_fake, labels_fake)
 
-            dis_loss += loss_d_real + loss_d_fake
+            dis_loss = loss_d_real + loss_d_fake
             dis_loss.backward()
             self.dis_optimizer.step()
 
@@ -74,7 +74,7 @@ class Trainer():
 
             total_gen_loss += gen_loss.item()
             total_dis_loss += dis_loss.item()
-        
+
             step = epoch * len(self.trainer_loader) + i
             self.writer.add_scalar("Loss/Generator", gen_loss.item(), step)
             self.writer.add_scalar("Loss/Discriminator", dis_loss.item(), step)
@@ -82,6 +82,7 @@ class Trainer():
         return total_gen_loss/len(self.trainer_loader), total_dis_loss/len(self.trainer_loader)
 
     def train_epochs(self, epochs):
+        self.fixed_noise = torch.rand(64, 100, device=self.device)
         for epoch in range(1, epochs + 1):
             avg_gen, avg_dis = self.train_one_epoch(epoch)
             print(f"Epoch {epoch} | Gen Loss: {avg_gen:.4f} | Dis Loss: {avg_dis:.4f}")
@@ -90,9 +91,9 @@ class Trainer():
             with torch.no_grad():
                 fakes = self.generator(self.fixed_noise).detach().cpu()
                 img_grid = torchvision.utils.make_grid(fakes, padding=2, normalize=True)
-                
+
                 self.writer.add_image("Generated_Images", img_grid, global_step=epoch)
-                img_path = os.path.join(self.save_dir, "plots", f"epoch_{epoch}.png")
+                img_path = os.path.join(self.save_dir, f"epoch_{epoch}.png")
                 torchvision.utils.save_image(img_grid, img_path)
 
             torch.save(self.generator.state_dict(), os.path.join(self.save_dir, "model", "generator.pth"))
