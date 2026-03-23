@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+"""
+Generates images of 64x64
+"""
+
 class Generator(nn.Module):
     def __init__(self, noise_size=100, spatial_size=4, depth=1024):
         super().__init__()
@@ -38,9 +42,10 @@ class Generator(nn.Module):
 
         return self.upsample(out)
 
-gen = Generator()
+if __name__ == "__main__":
+    gen = Generator()
 
-batch_size = 128
-z = torch.rand(batch_size, 100) 
-initial_feature_map = gen(z)
-print(initial_feature_map.shape)
+    batch_size = 128
+    z = torch.rand(batch_size, 100) 
+    initial_feature_map = gen(z)
+    print(initial_feature_map.shape) # should be [128, 3, 64, 64]
